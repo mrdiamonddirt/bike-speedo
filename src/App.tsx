@@ -82,7 +82,7 @@ function App() {
 
   const tripStartRef = useRef<TripSessionStart | null>(null)
 
-  const { current, permissionState, error, isWatching, status, retry } = useGeolocationTracker(trackingEnabled)
+  const { current, permissionState, error, isWatching, status, retry, requestPermission } = useGeolocationTracker(trackingEnabled)
 
   const startTripSession = () => {
     if (!current?.coords || tripStartRef.current) {
@@ -132,7 +132,14 @@ function App() {
     setRouteError(null)
   }
 
-  const handleStartTracking = () => {
+  const handleStartTracking = async () => {
+    const permissionGranted = await requestPermission()
+    if (!permissionGranted) {
+      setTrackingEnabled(false)
+      setTripMode('idle')
+      return
+    }
+
     setTrackingEnabled(true)
     setTripMode('active')
     startTripSession()
@@ -163,7 +170,7 @@ function App() {
     clearRouteContext()
   }
 
-  const handleTrackingAction = () => {
+  const handleTrackingAction = async () => {
     if (tripMode === 'active') {
       handlePauseTracking()
       return
@@ -174,7 +181,7 @@ function App() {
       return
     }
 
-    handleStartTracking()
+    await handleStartTracking()
   }
 
   const trackingActionLabel = tripMode === 'active' ? 'Pause tracking' : tripMode === 'paused' ? 'Resume tracking' : 'Start tracking'

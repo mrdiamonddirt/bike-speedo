@@ -13,6 +13,7 @@ export type TrackerErrorCode =
   | 'position-unavailable'
   | 'timeout'
   | 'unsupported'
+  | 'insecure-context'
   | 'unknown'
 
 type TrackerError = {
@@ -62,6 +63,19 @@ export function useGeolocationTracker(enabled: boolean) {
         setError({
           code: 'unsupported',
           message: 'Geolocation is not available in this browser.',
+        })
+        setIsWatching(false)
+        setStatus('error')
+      })
+      return undefined
+    }
+
+    if (!window.isSecureContext) {
+      queueMicrotask(() => {
+        setError({
+          code: 'insecure-context',
+          message:
+            'GPS requires HTTPS on mobile. Open the app over HTTPS (or localhost on this device) and try again.',
         })
         setIsWatching(false)
         setStatus('error')
@@ -139,7 +153,83 @@ export function useGeolocationTracker(enabled: boolean) {
     setRetryIndex((value) => value + 1)
   }
 
-  return { current, permissionState, error, isWatching, status, retry }
+  const requestPermission = () => {
+    if (!navigator.geolocation) {
+      setError({
+        code: 'unsupported',
+        message: 'Geolocation is not available in this browser.',
+      })
+      setStatus('error')
+      return Promise.resolve(false)
+    }
+
+    if (!window.isSecureContext) {
+      setError({
+        code: 'insecure-context',
+        message:
+          'GPS requires HTTPS on mobile. Open the app over HTTPS (or localhost on this device) and try again.',
+      })
+      setStatus('error')
+      return Promise.resolve(false)
+    }
+
+    setError(null)
+    setStatus('acquiring')
+
+    return new Promise<boolean>((resolve) => {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setPermissionState('granted')
+          const { coords, timestamp } = position
+          const previousPoint = lastPoint.current
+          const nextSpeedKph = computeSpeedKph(coords, timestamp, previousPoint)
+          const nextDistance = previousPoint
+            ? haversine(previousPoint.lat, previousPoint.lng, coords.latitude, coords.longitude)
+            : 0
+
+          distanceMeters.current += nextDistance
+          speedTrail.current = [...speedTrail.current.slice(-11), nextSpeedKph]
+          const averageSpeedKph = speedTrail.current.length
+            ? speedTrail.current.reduce((sum, value) => sum + value, 0) / speedTrail.current.length
+            : 0
+          maxSpeedKph.current = Math.max(maxSpeedKph.current, nextSpeedKph)
+
+          lastPoint.current = {
+            lat: coords.latitude,
+            lng: coords.longitude,
+            timestamp,
+          }
+
+          setCurrent({
+            coords,
+            speedKph: nextSpeedKph,
+            averageSpeedKph,
+            maxSpeedKph: maxSpeedKph.current,
+            distanceMeters: Number.isFinite(distanceMeters.current) ? distanceMeters.current : 0,
+          })
+          resolve(true)
+        },
+        (geoError) => {
+          const nextError = mapGeoError(geoError)
+          setError(nextError)
+          if (nextError.code === 'permission-denied') {
+            setPermissionState('denied')
+            setStatus('denied')
+          } else {
+            setStatus('error')
+          }
+          resolve(false)
+        },
+        {
+          enableHighAccuracy: true,
+          maximumAge: 1000,
+          timeout: 10000,
+        },
+      )
+    })
+  }
+
+  return { current, permissionState, error, isWatching, status, retry, requestPermission }
 }
 
 function mapGeoError(geoError: GeolocationPositionError): TrackerError {
