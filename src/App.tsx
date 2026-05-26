@@ -24,9 +24,11 @@ import {
   IconArrowRight,
   IconMap2,
   IconMapPin,
+  IconPlayerPause,
+  IconPlayerPlay,
+  IconPlayerStop,
   IconTarget,
   IconTrack,
-  IconWifi,
 } from '@tabler/icons-react'
 import { MapPanel, type RoutePlan } from './components/MapPanel'
 import { SpeedGauge } from './components/SpeedGauge'
@@ -36,7 +38,7 @@ import {
   usePersistentState,
 } from './lib/settings'
 import { useGeolocationTracker } from './lib/useGeolocationTracker'
-import { buildDemoDestination, fetchRoutePlan, formatDistance, formatSpeed } from './lib/routing'
+import { fetchRoutePlan, formatDistance, formatSpeed } from './lib/routing'
 import { clampTrips, formatTripDate, formatTripDuration, type TripSummary } from './lib/trips'
 import './App.css'
 
@@ -56,6 +58,7 @@ const ODOMETER_STYLE_OPTIONS = [
 ]
 
 type RouteStatus = 'idle' | 'loading' | 'ready' | 'error'
+type TripMode = 'idle' | 'active' | 'paused'
 
 type TripSessionStart = {
   startedAt: number
@@ -69,46 +72,31 @@ function App() {
     DEFAULT_SETTINGS,
   )
   const [trips, setTrips] = usePersistentState<TripSummary[]>('bike-speedo-trips', [])
-  const [trackingEnabled, setTrackingEnabled] = useState(true)
+  const [trackingEnabled, setTrackingEnabled] = useState(false)
+  const [tripMode, setTripMode] = useState<TripMode>('idle')
   const [showSettings, setShowSettings] = useState(false)
-  const [destinationMode, setDestinationMode] = useState<'demo' | 'custom'>('demo')
-  const [customDestination, setCustomDestination] = useState<{ lat: number; lng: number } | null>(null)
+  const [destination, setDestination] = useState<{ lat: number; lng: number } | null>(null)
   const [route, setRoute] = useState<RoutePlan | null>(null)
   const [routeStatus, setRouteStatus] = useState<RouteStatus>('idle')
   const [routeError, setRouteError] = useState<string | null>(null)
 
   const tripStartRef = useRef<TripSessionStart | null>(null)
 
-  const { current, permissionState, error, isWatching, routeSource, status, retry } = useGeolocationTracker(
-    trackingEnabled,
-  )
+  const { current, permissionState, error, isWatching, status, retry } = useGeolocationTracker(trackingEnabled)
 
-  const destination =
-    destinationMode === 'custom'
-      ? customDestination
-      : current?.coords
-        ? buildDemoDestination(current.coords.latitude, current.coords.longitude)
-        : null
-
-  useEffect(() => {
-    if (!trackingEnabled || !current?.coords) {
+  const startTripSession = () => {
+    if (!current?.coords || tripStartRef.current) {
       return
     }
 
-    if (!tripStartRef.current) {
-      tripStartRef.current = {
-        startedAt: Date.now(),
-        baseDistanceMeters: current.distanceMeters,
-        startMaxSpeedKph: current.maxSpeedKph,
-      }
+    tripStartRef.current = {
+      startedAt: Date.now(),
+      baseDistanceMeters: current.distanceMeters,
+      startMaxSpeedKph: current.maxSpeedKph,
     }
-  }, [current, trackingEnabled])
+  }
 
-  useEffect(() => {
-    if (trackingEnabled) {
-      return
-    }
-
+  const finalizeTripSession = () => {
     const tripStart = tripStartRef.current
     if (!tripStart || !current) {
       tripStartRef.current = null
@@ -135,10 +123,75 @@ function App() {
     }
 
     tripStartRef.current = null
-  }, [current, settings.units, setTrips, trackingEnabled])
+  }
+
+  const clearRouteContext = () => {
+    setDestination(null)
+    setRoute(null)
+    setRouteStatus('idle')
+    setRouteError(null)
+  }
+
+  const handleStartTracking = () => {
+    setTrackingEnabled(true)
+    setTripMode('active')
+    startTripSession()
+  }
+
+  const handlePauseTracking = () => {
+    if (tripMode !== 'active') {
+      return
+    }
+
+    setTrackingEnabled(false)
+    setTripMode('paused')
+  }
+
+  const handleResumeTracking = () => {
+    if (tripMode !== 'paused') {
+      return
+    }
+
+    setTrackingEnabled(true)
+    setTripMode('active')
+  }
+
+  const handleStopRoute = () => {
+    finalizeTripSession()
+    setTrackingEnabled(false)
+    setTripMode('idle')
+    clearRouteContext()
+  }
+
+  const handleTrackingAction = () => {
+    if (tripMode === 'active') {
+      handlePauseTracking()
+      return
+    }
+
+    if (tripMode === 'paused') {
+      handleResumeTracking()
+      return
+    }
+
+    handleStartTracking()
+  }
+
+  const trackingActionLabel = tripMode === 'active' ? 'Pause tracking' : tripMode === 'paused' ? 'Resume tracking' : 'Start tracking'
+
+  useEffect(() => {
+    if (tripMode !== 'active' || !current?.coords) {
+      return
+    }
+
+    startTripSession()
+  }, [current, tripMode])
 
   useEffect(() => {
     if (!current?.coords || !destination) {
+      setRoute(null)
+      setRouteStatus('idle')
+      setRouteError(null)
       return
     }
 
@@ -153,7 +206,6 @@ function App() {
           lng: current.coords.longitude,
         },
         destination,
-        source: routeSource,
         signal: controller.signal,
       })
         .then((plan) => {
@@ -182,7 +234,7 @@ function App() {
       controller.abort()
       window.clearTimeout(timer)
     }
-  }, [current?.coords, destination, routeSource])
+  }, [current?.coords, destination])
 
   const speedText = formatSpeed(current?.speedKph ?? 0, settings.units)
 
@@ -195,31 +247,55 @@ function App() {
   const odometerText = odometerDistance.toFixed(settings.units === 'mph' ? 1 : 2)
 
   const nextInstruction = route?.steps[0]
-  const routeSummary = route ? `${route.distanceKm.toFixed(1)} km • ${Math.round(route.durationMin)} min` : 'No route yet'
+  const routeSummary = route
+    ? `${route.distanceKm.toFixed(1)} km • ${Math.round(route.durationMin)} min`
+    : destination
+      ? 'Route preview pending'
+      : 'Set a destination'
 
   const hasRouteContext = Boolean(current?.coords && destination)
   const resolvedRouteStatus: RouteStatus = hasRouteContext ? routeStatus : 'idle'
   const resolvedRouteError = hasRouteContext ? routeError : null
   const resolvedRoute = hasRouteContext && routeStatus === 'ready' ? route : null
 
-  const isAcquiring = status === 'acquiring' || (!current && trackingEnabled)
+  const isAcquiring = status === 'acquiring' || (!current && tripMode === 'active')
   const accuracy = current?.coords?.accuracy
   const hasLowAccuracy = typeof accuracy === 'number' && accuracy > 50
+
+  const topbarActionIcon =
+    tripMode === 'active' ? <IconPlayerPause size={18} /> : <IconPlayerPlay size={18} />
+  const topbarActionText = tripMode === 'active' ? 'PAUSE' : tripMode === 'paused' ? 'RESUME' : 'START'
 
   return (
     <div className="app-shell" style={{ ['--accent' as string]: settings.accent }}>
       <header className="topbar">
-        <Button
-          radius="xl"
-          variant={trackingEnabled ? 'filled' : 'outline'}
-          color="dark"
-          leftSection={<IconTrack size={18} />}
-          className="status-pill"
-          onClick={() => setTrackingEnabled((value) => !value)}
-          aria-label={trackingEnabled ? 'Pause tracking' : 'Start tracking'}
-        >
-          {trackingEnabled ? 'ON' : 'OFF'}
-        </Button>
+        <Group gap="xs" wrap="nowrap">
+          <Button
+            radius="xl"
+            variant={tripMode === 'active' ? 'filled' : 'outline'}
+            color="dark"
+            leftSection={topbarActionIcon}
+            className="status-pill"
+            onClick={handleTrackingAction}
+            aria-label={trackingActionLabel}
+          >
+            {topbarActionText}
+          </Button>
+
+          {tripMode !== 'idle' ? (
+            <Button
+              radius="xl"
+              variant="outline"
+              color="red"
+              leftSection={<IconPlayerStop size={18} />}
+              className="status-pill"
+              onClick={handleStopRoute}
+              aria-label="Stop route and save trip"
+            >
+              STOP
+            </Button>
+          ) : null}
+        </Group>
 
         <Paper radius="xl" className="gps-pill" withBorder>
           <Group gap={8} wrap="nowrap">
@@ -306,12 +382,6 @@ function App() {
             }
             label="Show directions"
           />
-
-          <Switch
-            checked={destinationMode === 'demo'}
-            onChange={(event) => setDestinationMode(event.currentTarget.checked ? 'demo' : 'custom')}
-            label="Use demo destination"
-          />
         </Stack>
       </Modal>
 
@@ -322,7 +392,7 @@ function App() {
             maxSpeed={settings.gaugeMax}
             unit={settings.units}
             accent={settings.accent}
-            trackingEnabled={trackingEnabled}
+            tripMode={tripMode}
             speedValue={current?.speedKph ?? 0}
             odometerText={odometerText}
             odometerStyle={settings.odometerStyle}
@@ -330,7 +400,9 @@ function App() {
             nextInstruction={nextInstruction?.instruction}
             roadName={nextInstruction?.roadName}
             isAcquiring={isAcquiring}
-            onToggleTracking={() => setTrackingEnabled((value) => !value)}
+            trackingActionLabel={trackingActionLabel}
+            trackingActionAriaLabel={trackingActionLabel}
+            onTrackingAction={handleTrackingAction}
             onToggleSettings={() => setShowSettings((value) => !value)}
           />
 
@@ -338,8 +410,8 @@ function App() {
             <Badge variant="light" color={isWatching ? 'teal' : 'gray'}>
               {status}
             </Badge>
-            <Badge leftSection={<IconWifi size={12} />} variant="light">
-              {routeSource}
+            <Badge leftSection={<IconTrack size={12} />} variant="light" color={tripMode === 'active' ? 'teal' : 'gray'}>
+              {tripMode === 'active' ? 'trip active' : tripMode === 'paused' ? 'trip paused' : 'trip idle'}
             </Badge>
             {hasLowAccuracy ? (
               <Badge leftSection={<IconAlertTriangle size={12} />} color="yellow" variant="light">
@@ -435,12 +507,17 @@ function App() {
                 size="xs"
                 variant="light"
                 leftSection={<IconTarget size={14} />}
-                onClick={() => setDestinationMode('demo')}
-                aria-label="Switch destination mode to demo route"
+                onClick={clearRouteContext}
+                aria-label="Clear destination and route"
+                disabled={!destination && !route}
               >
-                Demo route
+                Clear route
               </Button>
             </Group>
+
+            <Text size="sm" c="dimmed" mb="sm">
+              Set destination-only mode by selecting a point on the map while tracking is paused or idle.
+            </Text>
 
             <MapPanel
               current={current?.coords ? { lat: current.coords.latitude, lng: current.coords.longitude } : null}
@@ -449,8 +526,7 @@ function App() {
               accent={settings.accent}
               showDirections={settings.showDirections}
               onSelectDestination={(coords) => {
-                setDestinationMode('custom')
-                setCustomDestination(coords)
+                setDestination(coords)
               }}
             />
 
@@ -461,10 +537,7 @@ function App() {
                 Current position
               </Badge>
               <Badge leftSection={<IconArrowRight size={12} />} variant="light">
-                {destinationMode === 'demo' ? 'Demo destination' : 'Custom destination'}
-              </Badge>
-              <Badge leftSection={<IconWifi size={12} />} variant="light">
-                {routeSource}
+                {destination ? 'Destination set' : 'No destination'}
               </Badge>
             </Group>
           </Paper>

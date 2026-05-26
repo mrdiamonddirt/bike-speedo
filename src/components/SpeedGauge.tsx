@@ -1,14 +1,16 @@
 import { useEffect, useState } from 'react'
 import { ActionIcon, Badge, Card, Group, Paper, Stack, Text, Title } from '@mantine/core'
-import { IconRadar, IconSettings } from '@tabler/icons-react'
+import { IconPlayerPause, IconPlayerPlay, IconSettings } from '@tabler/icons-react'
 import type { OdometerStyle } from '../lib/settings'
+
+type TripMode = 'idle' | 'active' | 'paused'
 
 type SpeedGaugeProps = {
   speedText: string
   maxSpeed: number
   unit: 'mph' | 'kph'
   accent: string
-  trackingEnabled: boolean
+  tripMode: TripMode
   speedValue: number
   odometerText: string
   odometerStyle: OdometerStyle
@@ -16,7 +18,9 @@ type SpeedGaugeProps = {
   nextInstruction?: string
   roadName?: string
   isAcquiring?: boolean
-  onToggleTracking: () => void
+  trackingActionLabel: string
+  trackingActionAriaLabel: string
+  onTrackingAction: () => void
   onToggleSettings: () => void
 }
 
@@ -25,7 +29,7 @@ export function SpeedGauge({
   maxSpeed,
   unit,
   accent,
-  trackingEnabled,
+  tripMode,
   speedValue,
   odometerText,
   odometerStyle,
@@ -33,7 +37,9 @@ export function SpeedGauge({
   nextInstruction,
   roadName,
   isAcquiring,
-  onToggleTracking,
+  trackingActionLabel,
+  trackingActionAriaLabel,
+  onTrackingAction,
   onToggleSettings,
 }: SpeedGaugeProps) {
   const progress = Math.min(speedValue / maxSpeed, 1)
@@ -77,11 +83,15 @@ export function SpeedGauge({
     })
   }, [odometerText])
 
+  const statusColor = tripMode === 'active' ? 'teal' : tripMode === 'paused' ? 'yellow' : 'gray'
+  const statusLabel = tripMode === 'active' ? 'TRACKING' : tripMode === 'paused' ? 'PAUSED' : 'READY'
+  const actionIcon = tripMode === 'active' ? <IconPlayerPause size={16} /> : <IconPlayerPlay size={16} />
+
   return (
     <div className="speed-gauge-wrap">
       <div className="gauge-topline">
-        <Badge radius="xl" variant="light" color={trackingEnabled ? 'teal' : 'gray'} role="status" aria-live="polite">
-          {trackingEnabled ? 'TRACKING' : 'PAUSED'}
+        <Badge radius="xl" variant="light" color={statusColor} role="status" aria-live="polite">
+          {statusLabel}
         </Badge>
         <Badge radius="xl" variant="light" color="blue">
           {unit.toUpperCase()}
@@ -127,8 +137,8 @@ export function SpeedGauge({
         </div>
 
         <Group justify="space-between" className="gauge-meta">
-          <ActionIcon variant="light" radius="xl" size="lg" onClick={onToggleTracking} aria-label={trackingEnabled ? 'Pause tracking' : 'Start tracking'}>
-            <IconRadar size={16} />
+          <ActionIcon variant="light" radius="xl" size="lg" onClick={onTrackingAction} aria-label={trackingActionAriaLabel}>
+            {actionIcon}
           </ActionIcon>
 
           <Stack gap={2} align="center">
@@ -175,6 +185,10 @@ export function SpeedGauge({
             <IconSettings size={16} />
           </ActionIcon>
         </Group>
+
+        <Text size="xs" c="dimmed" ta="center" mt={6}>
+          {trackingActionLabel}
+        </Text>
 
         <div className="gauge-footer">
           <Card withBorder radius="lg" className="gauge-card">

@@ -7,8 +7,6 @@ export type TrackerPoint = {
   maxSpeedKph: number
   distanceMeters: number
 }
-
-type RouteSource = 'geolocation' | 'demo'
 export type TrackerStatus = 'idle' | 'acquiring' | 'tracking' | 'paused' | 'denied' | 'error'
 export type TrackerErrorCode =
   | 'permission-denied'
@@ -35,7 +33,6 @@ export function useGeolocationTracker(enabled: boolean) {
   const [isWatching, setIsWatching] = useState(false)
   const [status, setStatus] = useState<TrackerStatus>('idle')
   const [retryIndex, setRetryIndex] = useState(0)
-  const [routeSource, setRouteSource] = useState<RouteSource>('demo')
 
   useEffect(() => {
     if (!navigator.permissions?.query) {
@@ -68,7 +65,6 @@ export function useGeolocationTracker(enabled: boolean) {
         })
         setIsWatching(false)
         setStatus('error')
-        setRouteSource('demo')
       })
       return undefined
     }
@@ -77,7 +73,6 @@ export function useGeolocationTracker(enabled: boolean) {
       setError(null)
       setIsWatching(true)
       setStatus('acquiring')
-      setRouteSource('geolocation')
     })
 
     watchId.current = navigator.geolocation.watchPosition(
@@ -122,7 +117,6 @@ export function useGeolocationTracker(enabled: boolean) {
           setStatus('error')
         }
         setIsWatching(false)
-        setRouteSource('demo')
       },
       {
         enableHighAccuracy: true,
@@ -145,7 +139,7 @@ export function useGeolocationTracker(enabled: boolean) {
     setRetryIndex((value) => value + 1)
   }
 
-  return { current, permissionState, error, isWatching, routeSource, status, retry }
+  return { current, permissionState, error, isWatching, status, retry }
 }
 
 function mapGeoError(geoError: GeolocationPositionError): TrackerError {

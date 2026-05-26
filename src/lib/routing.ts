@@ -1,25 +1,14 @@
 import type { RoutePlan } from '../components/MapPanel'
 
-type RouteSource = 'geolocation' | 'demo'
-
 const OSRM_BASE_URL = 'https://router.project-osrm.org/route/v1/cycling'
-
-export function buildDemoDestination(lat: number, lng: number) {
-  return {
-    lat: lat + 0.0085,
-    lng: lng + 0.0105,
-  }
-}
 
 export async function fetchRoutePlan({
   origin,
   destination,
-  source,
   signal,
 }: {
   origin: { lat: number; lng: number }
   destination: { lat: number; lng: number }
-  source: RouteSource
   signal?: AbortSignal
 }): Promise<RoutePlan | null> {
   if (!isValidCoordinate(origin.lat, origin.lng) || !isValidCoordinate(destination.lat, destination.lng)) {
@@ -67,7 +56,7 @@ export async function fetchRoutePlan({
     coordinates: routeCoordinates,
     distanceKm: route.distance / 1000,
     durationMin: route.duration / 60,
-    maneuverLabel: source === 'geolocation' ? 'Live GPS routing' : 'Demo route preview',
+    maneuverLabel: 'Live route preview',
     steps,
   }
 }
