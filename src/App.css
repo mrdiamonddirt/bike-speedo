@@ -117,22 +117,65 @@
   place-items: center;
 }
 
+.gauge-nav-segment {
+  position: absolute;
+  top: 44px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(220px, 62%);
+  padding: 10px 12px 8px;
+  border-radius: 18px;
+  text-align: center;
+  z-index: 3;
+  backdrop-filter: blur(8px);
+  background: linear-gradient(180deg, rgba(10, 11, 14, 0.8), rgba(10, 11, 14, 0.56));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.gauge-nav-segment.is-idle {
+  opacity: 0.72;
+}
+
+.gauge-nav-arrow {
+  margin: 0;
+  color: var(--accent);
+  font-size: 1.6rem;
+  line-height: 1;
+  font-weight: 700;
+}
+
+.gauge-nav-text {
+  margin-top: 2px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.gauge-nav-road {
+  margin-top: 2px;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.68rem;
+}
+
 .gauge-svg {
   position: absolute;
-  inset: 50% auto auto 50%;
-  transform: translate(-50%, -51%);
+  inset: calc(50% + 10px) auto auto 50%;
+  transform: translate(-50%, -50%);
   width: min(72vw, 520px);
   height: min(72vw, 520px);
   pointer-events: none;
+  z-index: 1;
 }
 
 .gauge-track,
 .gauge-progress {
   fill: none;
-  stroke-width: 18;
+  stroke-width: 16;
   transform: rotate(143deg);
   transform-origin: 160px 160px;
-  stroke-linecap: round;
+  stroke-linecap: butt;
 }
 
 .gauge-track {
@@ -142,6 +185,40 @@
 .gauge-progress {
   transition: stroke-dashoffset 240ms ease;
   filter: drop-shadow(0 0 8px var(--gauge-glow));
+}
+
+.indicator-needle .gauge-progress {
+  display: none;
+}
+
+.indicator-arc .gauge-needle-wrap {
+  display: none;
+}
+
+.gauge-needle-wrap {
+  filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.35));
+}
+
+.gauge-needle {
+  stroke: rgba(219, 225, 232, 0.72);
+  stroke-width: 5;
+  stroke-linecap: round;
+}
+
+.gauge-needle-highlight {
+  stroke: #f6fbff;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+}
+
+.gauge-needle-hub {
+  fill: rgba(10, 10, 10, 0.94);
+  stroke: rgba(255, 255, 255, 0.22);
+  stroke-width: 1.5;
+}
+
+.gauge-needle-core {
+  fill: var(--accent);
 }
 
 .gauge-tick {
@@ -168,8 +245,31 @@
 }
 
 .speed-text-block {
-  z-index: 1;
-  margin-top: 18px;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  margin-top: 0;
+}
+
+.speed-text-block-digital {
+  bottom: 94px;
+  padding: 14px 18px 10px;
+  min-width: 168px;
+  background: linear-gradient(180deg, rgba(8, 9, 12, 0.98), rgba(8, 9, 12, 0.96));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.34);
+}
+
+.speed-text-block-analog {
+  bottom: 92px;
+  padding: 14px 18px 10px;
+  min-width: 168px;
+  background: linear-gradient(180deg, rgba(8, 9, 12, 0.985), rgba(8, 9, 12, 0.965));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.34);
 }
 
 .speed-text {
@@ -189,6 +289,17 @@
   color: var(--speed-unit-color);
 }
 
+.layout-analog .speed-text {
+  font-size: clamp(3.2rem, 12vw, 5rem);
+  line-height: 0.95;
+}
+
+.layout-analog .speed-unit {
+  margin-top: 4px;
+  font-size: 0.82rem;
+  letter-spacing: 0.18em;
+}
+
 .gauge-limits {
   position: absolute;
   width: min(72vw, 520px);
@@ -197,6 +308,14 @@
   display: flex;
   justify-content: space-between;
   padding: 0 34px;
+}
+
+.layout-analog .gauge-limits {
+  display: none;
+}
+
+.layout-digital .gauge-limits {
+  display: none;
 }
 
 .gauge-meta {
@@ -390,57 +509,135 @@
   background: radial-gradient(circle at 50% 46%, transparent 32%, rgba(255, 209, 122, 0.05) 34%, transparent 60%);
 }
 
-.speedo-theme-amber-touring .gauge-progress,
 .speedo-theme-amber-touring .gauge-track {
-  stroke-linecap: butt;
+  stroke-width: 13;
+  stroke-dasharray: 4 6;
+}
+
+.speedo-theme-amber-touring .gauge-needle {
+  stroke: rgba(255, 244, 222, 0.72);
+  stroke-width: 6;
+}
+
+.speedo-theme-amber-touring .gauge-needle-highlight {
+  stroke: #fff4de;
+}
+
+.speedo-theme-amber-touring .gauge-tick-label {
+  font-family: 'Trebuchet MS', 'Segoe UI', sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.03em;
 }
 
 .speedo-theme-amber-touring .speed-text {
-  letter-spacing: -0.04em;
+  letter-spacing: -0.03em;
+  font-weight: 650;
 }
 
 .theme-mint-circuit .gauge-shell::after {
   border-color: rgba(128, 255, 216, 0.1);
-  box-shadow: inset 0 0 0 1px rgba(74, 222, 128, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(74, 222, 128, 0.08), inset 0 0 0 10px rgba(33, 58, 48, 0.22);
 }
 
 .speedo-theme-mint-circuit .gauge-tick,
 .speedo-theme-mint-circuit .gauge-tick-label {
-  opacity: 0.82;
+  opacity: 0.76;
 }
 
 .speedo-theme-mint-circuit .gauge-progress {
   stroke-linecap: square;
+  stroke-width: 12;
+}
+
+.speedo-theme-mint-circuit .gauge-nav-segment {
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(8, 24, 20, 0.88), rgba(8, 24, 20, 0.7));
+}
+
+.speedo-theme-mint-circuit .gauge-needle {
+  stroke: rgba(201, 255, 233, 0.72);
+}
+
+.speedo-theme-mint-circuit .gauge-needle-highlight {
+  stroke: #dcfff3;
 }
 
 .speedo-theme-rose-night .speed-text {
-  font-weight: 600;
-  letter-spacing: -0.05em;
+  font-weight: 560;
+  letter-spacing: -0.035em;
+}
+
+.speedo-theme-rose-night .gauge-track {
+  stroke-width: 15;
+  opacity: 0.62;
 }
 
 .theme-rose-night .gauge-shell::before {
-  background: radial-gradient(circle at 50% 42%, transparent 31%, rgba(255, 199, 214, 0.04) 35%, transparent 58%);
+  background: radial-gradient(circle at 50% 42%, transparent 30%, rgba(255, 174, 150, 0.08) 35%, transparent 58%);
+}
+
+.speedo-theme-rose-night .gauge-needle {
+  stroke: rgba(255, 194, 170, 0.84);
+  stroke-width: 6;
+}
+
+.speedo-theme-rose-night .gauge-needle-highlight {
+  stroke: #ffe7dd;
+  stroke-width: 2.4;
+}
+
+.speedo-theme-rose-night .gauge-ticks g:last-child .gauge-tick,
+.speedo-theme-rose-night .gauge-ticks g:last-child .gauge-tick-major,
+.speedo-theme-rose-night .gauge-ticks g:last-child .gauge-tick-label,
+.speedo-theme-rose-night .gauge-ticks g:last-child .gauge-tick-label-major {
+  stroke: rgba(255, 102, 84, 0.95);
+  fill: rgba(255, 155, 134, 0.94);
 }
 
 .speedo-theme-graphite-rally .gauge-track,
 .speedo-theme-graphite-rally .gauge-progress {
-  stroke-width: 14;
+  stroke-width: 12;
+}
+
+.speedo-theme-graphite-rally .gauge-track {
+  opacity: 0.64;
+  stroke-dasharray: 2 7;
+}
+
+.speedo-theme-graphite-rally .gauge-needle {
+  stroke: rgba(255, 255, 255, 0.76);
+}
+
+.speedo-theme-graphite-rally .gauge-nav-segment,
+.speedo-theme-ivory-luxe .gauge-nav-segment,
+.speedo-theme-amber-touring .gauge-nav-segment {
+  top: 36px;
+}
+
+.speedo-theme-graphite-rally .gauge-needle-highlight {
+  stroke: #ffffff;
 }
 
 .speedo-theme-graphite-rally .gauge-tick {
-  stroke-width: 2.5;
+  stroke-width: 2;
 }
 
 .speedo-theme-graphite-rally .speed-text {
   text-transform: uppercase;
+  font-family: 'Arial Narrow', 'Helvetica Neue', sans-serif;
+  letter-spacing: -0.03em;
 }
 
 .theme-graphite-rally .gauge-shell::after {
   border-color: rgba(255, 255, 255, 0.08);
 }
 
+.speedo-theme-graphite-rally .speed-text-block-analog {
+  background: linear-gradient(180deg, rgba(10, 10, 12, 0.98), rgba(10, 10, 12, 0.96));
+}
+
 .speedo-theme-ivory-luxe .speed-text {
-  font-weight: 500;
+  font-weight: 470;
   text-shadow: 0 0 12px rgba(32, 48, 64, 0.5);
 }
 
@@ -448,12 +645,134 @@
   background: radial-gradient(circle at 50% 44%, transparent 30%, rgba(255, 248, 224, 0.05) 35%, transparent 58%);
 }
 
-.speedo-theme-neon-arc .gauge-progress {
+.speedo-theme-ivory-luxe .gauge-track {
+  stroke-width: 11;
+  opacity: 0.56;
+}
+
+.speedo-theme-ivory-luxe .gauge-progress {
+  stroke-width: 12;
   stroke-linecap: round;
+}
+
+.speedo-theme-ivory-luxe .gauge-needle {
+  stroke: rgba(252, 249, 240, 0.76);
+}
+
+.speedo-theme-ivory-luxe .gauge-needle-highlight {
+  stroke: #fffdf8;
+}
+
+.speedo-theme-ivory-luxe .speed-text-block-analog {
+  background: linear-gradient(180deg, rgba(13, 17, 26, 0.98), rgba(13, 17, 26, 0.96));
+}
+
+.speedo-theme-neon-arc .gauge-progress {
+  stroke-linecap: square;
+  stroke-width: 15;
 }
 
 .speedo-theme-neon-arc .speed-text {
   letter-spacing: -0.08em;
+  font-weight: 700;
+}
+
+.speedo-theme-neon-arc .gauge-track {
+  opacity: 0.7;
+  stroke-dasharray: 3 5;
+}
+
+.speedo-theme-neon-arc .gauge-nav-segment {
+  border-radius: 12px;
+}
+
+.theme-white-retro-90s {
+  color: #14213d;
+}
+
+.theme-white-retro-90s .stat-card,
+.theme-white-retro-90s .panel,
+.theme-white-retro-90s .gauge-shell,
+.theme-white-retro-90s .gps-pill,
+.theme-white-retro-90s .status-pill {
+  box-shadow: 0 14px 38px rgba(56, 79, 122, 0.15);
+}
+
+.theme-white-retro-90s .stat-label,
+.theme-white-retro-90s .gauge-nav-road,
+.theme-white-retro-90s .speed-unit,
+.theme-white-retro-90s .gauge-limits,
+.theme-white-retro-90s .gauge-footer .mantine-Text-root,
+.theme-white-retro-90s .gauge-meta .mantine-Text-root {
+  color: rgba(20, 33, 61, 0.7);
+}
+
+.theme-white-retro-90s .gauge-shell::before {
+  background: radial-gradient(circle at 50% 45%, transparent 29%, rgba(31, 65, 125, 0.08) 34%, transparent 59%);
+}
+
+.theme-white-retro-90s .gauge-shell::after {
+  border-color: rgba(40, 60, 98, 0.2);
+}
+
+.speedo-theme-white-retro-90s .gauge-track {
+  stroke-width: 12;
+  stroke-dasharray: 2 4;
+}
+
+.speedo-theme-white-retro-90s .gauge-progress {
+  stroke-width: 14;
+  stroke-linecap: square;
+}
+
+.speedo-theme-white-retro-90s .gauge-tick {
+  stroke: rgba(25, 41, 73, 0.5);
+}
+
+.speedo-theme-white-retro-90s .gauge-tick-major {
+  stroke: rgba(17, 30, 56, 0.8);
+}
+
+.speedo-theme-white-retro-90s .gauge-tick-label {
+  fill: rgba(18, 33, 62, 0.8);
+  font-family: 'Tahoma', 'Segoe UI', sans-serif;
+  font-size: 11px;
+}
+
+.speedo-theme-white-retro-90s .gauge-tick-label-major {
+  fill: rgba(11, 23, 46, 0.95);
+}
+
+.speedo-theme-white-retro-90s .speed-text {
+  text-shadow: 0 0 0 transparent;
+  letter-spacing: -0.045em;
+  font-weight: 700;
+}
+
+.speedo-theme-white-retro-90s .speed-text-block-digital {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(236, 242, 251, 0.94));
+  border: 1px solid rgba(42, 64, 104, 0.22);
+  border-radius: 10px;
+  box-shadow: 0 6px 16px rgba(57, 89, 148, 0.16);
+}
+
+.speedo-theme-white-retro-90s .gauge-nav-segment {
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(250, 252, 255, 0.92), rgba(232, 238, 247, 0.9));
+  border: 1px solid rgba(35, 58, 101, 0.22);
+}
+
+.speedo-theme-white-retro-90s .gauge-nav-arrow,
+.speedo-theme-white-retro-90s .gauge-nav-text,
+.speedo-theme-white-retro-90s .gauge-nav-road {
+  color: #10284f;
+}
+
+.speedo-theme-white-retro-90s .odometer-eight-segment {
+  color: #00afc6;
+  background: rgba(15, 30, 58, 0.96);
+  border-color: rgba(0, 218, 255, 0.5);
+  box-shadow: inset 0 0 16px rgba(0, 184, 216, 0.24), 0 0 10px rgba(0, 184, 216, 0.22);
 }
 
 .map-column.closed {
@@ -536,6 +855,23 @@ select:focus-visible {
 
   .gauge-center {
     min-height: clamp(360px, 52vh, 460px);
+  }
+
+  .gauge-nav-segment {
+    top: 28px;
+    width: min(210px, 72%);
+    padding: 8px 10px 7px;
+  }
+
+  .gauge-nav-arrow {
+    font-size: 1.35rem;
+  }
+
+  .speed-text-block-digital,
+  .speed-text-block-analog {
+    bottom: 82px;
+    min-width: 154px;
+    padding: 10px 12px 8px;
   }
 
   .route-overlay {

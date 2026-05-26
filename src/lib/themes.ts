@@ -5,15 +5,19 @@ export type SpeedoTheme = {
   label: string
   accent: string
   odometerStyle: OdometerStyle
+  indicatorMode: 'arc' | 'needle'
+  layoutMode: 'digital' | 'analog'
   cssVariables: Record<string, string>
 }
 
 export const SPEEDO_THEMES: SpeedoTheme[] = [
   {
     id: 'neon-arc',
-    label: 'Neon Arc',
+    label: 'Apex Digital Cluster',
     accent: '#20a4ff',
     odometerStyle: 'classic',
+    indicatorMode: 'arc',
+    layoutMode: 'digital',
     cssVariables: {
       '--accent': '#20a4ff',
       '--app-bg': '#050608',
@@ -35,9 +39,11 @@ export const SPEEDO_THEMES: SpeedoTheme[] = [
   },
   {
     id: 'amber-touring',
-    label: 'Amber Touring',
+    label: 'Heritage Touring Dial',
     accent: '#f59e0b',
     odometerStyle: 'mechanical',
+    indicatorMode: 'needle',
+    layoutMode: 'analog',
     cssVariables: {
       '--accent': '#f59e0b',
       '--app-bg': '#0b0906',
@@ -59,11 +65,13 @@ export const SPEEDO_THEMES: SpeedoTheme[] = [
   },
   {
     id: 'mint-circuit',
-    label: 'Mint Circuit',
-    accent: '#34d399',
+    label: 'Utility LCD Cluster',
+    accent: '#3ad59f',
     odometerStyle: 'lcd',
+    indicatorMode: 'arc',
+    layoutMode: 'digital',
     cssVariables: {
-      '--accent': '#34d399',
+      '--accent': '#3ad59f',
       '--app-bg': '#030807',
       '--bg-glow-a': 'rgba(52, 211, 153, 0.2)',
       '--bg-glow-b': 'rgba(45, 212, 191, 0.14)',
@@ -83,19 +91,21 @@ export const SPEEDO_THEMES: SpeedoTheme[] = [
   },
   {
     id: 'rose-night',
-    label: 'Rose Night',
-    accent: '#fb7185',
+    label: 'Midnight GT Dial',
+    accent: '#ff8a66',
     odometerStyle: 'retro-roll',
+    indicatorMode: 'needle',
+    layoutMode: 'analog',
     cssVariables: {
-      '--accent': '#fb7185',
+      '--accent': '#ff8a66',
       '--app-bg': '#090507',
-      '--bg-glow-a': 'rgba(251, 113, 133, 0.17)',
-      '--bg-glow-b': 'rgba(244, 114, 182, 0.12)',
+      '--bg-glow-a': 'rgba(255, 138, 102, 0.16)',
+      '--bg-glow-b': 'rgba(255, 94, 98, 0.12)',
       '--panel-bg': 'rgba(255, 231, 236, 0.05)',
       '--panel-border': 'rgba(255, 166, 179, 0.13)',
       '--gauge-shell-bg': 'linear-gradient(180deg, rgba(26, 10, 14, 0.98), rgba(10, 4, 7, 0.98))',
       '--gauge-track': 'rgba(255, 208, 216, 0.14)',
-      '--gauge-glow': 'rgba(251, 113, 133, 0.35)',
+      '--gauge-glow': 'rgba(255, 138, 102, 0.34)',
       '--speed-color': '#fff2f5',
       '--speed-unit-color': 'rgba(255, 223, 230, 0.72)',
       '--font-display': '"Georgia", "Times New Roman", serif',
@@ -107,9 +117,11 @@ export const SPEEDO_THEMES: SpeedoTheme[] = [
   },
   {
     id: 'graphite-rally',
-    label: 'Graphite Rally',
+    label: 'Rally Mono Tach',
     accent: '#d1d5db',
     odometerStyle: 'eight-segment',
+    indicatorMode: 'needle',
+    layoutMode: 'analog',
     cssVariables: {
       '--accent': '#d1d5db',
       '--app-bg': '#040404',
@@ -131,9 +143,11 @@ export const SPEEDO_THEMES: SpeedoTheme[] = [
   },
   {
     id: 'ivory-luxe',
-    label: 'Ivory Luxe',
+    label: 'Grand Tour Chronograph',
     accent: '#7dd3fc',
     odometerStyle: 'classic',
+    indicatorMode: 'arc',
+    layoutMode: 'analog',
     cssVariables: {
       '--accent': '#7dd3fc',
       '--app-bg': '#080b10',
@@ -151,6 +165,32 @@ export const SPEEDO_THEMES: SpeedoTheme[] = [
       '--card-bg': 'rgba(248, 250, 252, 0.05)',
       '--badge-bg': 'rgba(248, 250, 252, 0.05)',
       '--odometer-accent': '#e7f3ff',
+    },
+  },
+  {
+    id: 'white-retro-90s',
+    label: 'White Retro 90s Dash',
+    accent: '#00b8d8',
+    odometerStyle: 'eight-segment',
+    indicatorMode: 'arc',
+    layoutMode: 'digital',
+    cssVariables: {
+      '--accent': '#00b8d8',
+      '--app-bg': '#f4f5f7',
+      '--bg-glow-a': 'rgba(0, 184, 216, 0.12)',
+      '--bg-glow-b': 'rgba(57, 132, 255, 0.08)',
+      '--panel-bg': 'rgba(255, 255, 255, 0.82)',
+      '--panel-border': 'rgba(28, 38, 58, 0.12)',
+      '--gauge-shell-bg': 'linear-gradient(180deg, rgba(252, 253, 255, 0.98), rgba(240, 243, 248, 0.98))',
+      '--gauge-track': 'rgba(38, 56, 89, 0.26)',
+      '--gauge-glow': 'rgba(0, 184, 216, 0.32)',
+      '--speed-color': '#0f172a',
+      '--speed-unit-color': 'rgba(15, 23, 42, 0.66)',
+      '--font-display': '"Eurostile", "Segoe UI", sans-serif',
+      '--font-body': '"Tahoma", "Segoe UI", sans-serif',
+      '--card-bg': 'rgba(255, 255, 255, 0.74)',
+      '--badge-bg': 'rgba(255, 255, 255, 0.78)',
+      '--odometer-accent': '#26f6ff',
     },
   },
 ]

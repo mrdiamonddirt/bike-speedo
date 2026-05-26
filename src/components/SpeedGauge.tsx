@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { ActionIcon, Badge, Card, Group, Paper, Stack, Text, Title } from '@mantine/core'
 import { IconPlayerPause, IconPlayerPlay, IconSettings } from '@tabler/icons-react'
 import type { OdometerStyle } from '../lib/settings'
+import { getSpeedoTheme } from '../lib/themes'
 
 type TripMode = 'idle' | 'active' | 'paused'
 
@@ -44,11 +45,24 @@ export function SpeedGauge({
   onTrackingAction,
   onToggleSettings,
 }: SpeedGaugeProps) {
-  const progress = Math.min(speedValue / maxSpeed, 1)
-  const dashOffset = 460 - 460 * progress
+  const activeTheme = getSpeedoTheme(themeId)
+  const indicatorMode = activeTheme.indicatorMode
+  const layoutMode = activeTheme.layoutMode
+  const progress = Math.min(Math.max(speedValue / maxSpeed, 0), 1)
+  const arcLength = 460
+  const dashOffset = arcLength - arcLength * progress
+  const showArcProgress = progress > 0
+  const startAngle = 140
+  const endAngle = 400
+  const needleAngle = startAngle + (endAngle - startAngle) * progress
+  const needleRadians = (needleAngle * Math.PI) / 180
+  const needleBaseX = 160 + Math.cos(needleRadians) * 12
+  const needleBaseY = 160 + Math.sin(needleRadians) * 12
+  const needleStartX = 160 + Math.cos(needleRadians) * 30
+  const needleStartY = 160 + Math.sin(needleRadians) * 30
+  const needleTipX = 160 + Math.cos(needleRadians) * 118
+  const needleTipY = 160 + Math.sin(needleRadians) * 118
   const dialTicks = Array.from({ length: 7 }, (_, index) => {
-    const startAngle = 140
-    const endAngle = 400
     const angle = startAngle + ((endAngle - startAngle) * index) / 6
     const radians = (angle * Math.PI) / 180
     const innerRadius = 138
@@ -108,9 +122,10 @@ export function SpeedGauge({
   const statusColor = tripMode === 'active' ? 'teal' : tripMode === 'paused' ? 'yellow' : 'gray'
   const statusLabel = tripMode === 'active' ? 'TRACKING' : tripMode === 'paused' ? 'PAUSED' : 'READY'
   const actionIcon = tripMode === 'active' ? <IconPlayerPause size={16} /> : <IconPlayerPlay size={16} />
+  const nextManeuver = toManeuverBadge(nextInstruction)
 
   return (
-    <div className={`speed-gauge-wrap speedo-theme-${themeId}`}>
+    <div className={`speed-gauge-wrap speedo-theme-${themeId} indicator-${indicatorMode} layout-${layoutMode}`}>
       <div className="gauge-topline">
         <Badge radius="xl" variant="light" color={statusColor} role="status" aria-live="polite">
           {statusLabel}
@@ -122,6 +137,20 @@ export function SpeedGauge({
 
       <Paper className="gauge-shell" radius="xl" withBorder>
         <div className="gauge-center">
+          <div className={`gauge-nav-segment ${nextInstruction ? 'has-maneuver' : 'is-idle'}`}>
+            <Text className="gauge-nav-arrow" aria-hidden="true">
+              {nextManeuver.symbol}
+            </Text>
+            <Text className="gauge-nav-text" lineClamp={1}>
+              {nextManeuver.label}
+            </Text>
+            {roadName ? (
+              <Text className="gauge-nav-road" lineClamp={1}>
+                {roadName}
+              </Text>
+            ) : null}
+          </div>
+
           <svg viewBox="0 0 320 320" className="gauge-svg" aria-hidden="true">
             <defs>
               <linearGradient id="speed-gradient" x1="0" x2="1" y1="0" y2="0">
@@ -146,18 +175,30 @@ export function SpeedGauge({
               ))}
             </g>
             <circle className="gauge-track" cx="160" cy="160" r="128" />
-            <circle
-              className="gauge-progress"
-              cx="160"
-              cy="160"
-              r="128"
-              stroke="url(#speed-gradient)"
-              strokeDasharray="460"
-              strokeDashoffset={dashOffset}
-            />
+            {indicatorMode === 'arc' ? (
+              showArcProgress ? (
+                <circle
+                  className="gauge-progress"
+                  cx="160"
+                  cy="160"
+                  r="128"
+                  stroke="url(#speed-gradient)"
+                  strokeDasharray={`${arcLength} 1000`}
+                  strokeDashoffset={dashOffset}
+                />
+              ) : null
+            ) : null}
+            {indicatorMode === 'needle' ? (
+              <g className="gauge-needle-wrap">
+                <line className="gauge-needle" x1={needleBaseX} y1={needleBaseY} x2={needleTipX} y2={needleTipY} />
+                <line className="gauge-needle-highlight" x1={needleStartX} y1={needleStartY} x2={needleTipX} y2={needleTipY} />
+                <circle className="gauge-needle-hub" cx="160" cy="160" r="11" />
+                <circle className="gauge-needle-core" cx="160" cy="160" r="5" />
+              </g>
+            ) : null}
           </svg>
 
-          <Stack gap={0} align="center" className="speed-text-block" role="status" aria-live="polite" aria-label={`Current speed ${speedText} ${unit}`}>
+          <Stack gap={0} align="center" className={`speed-text-block speed-text-block-${layoutMode}`} role="status" aria-live="polite" aria-label={`Current speed ${speedText} ${unit}`}>
             <Title order={1} className="speed-text">
               {isAcquiring ? '--' : speedText}
             </Title>
@@ -247,4 +288,48 @@ export function SpeedGauge({
       </Paper>
     </div>
   )
+}
+
+function toManeuverBadge(instruction?: string) {
+  if (!instruction) {
+    return {
+      symbol: '↑',
+      label: 'No maneuver',
+    }
+  }
+
+  const normalized = instruction.toLowerCase()
+
+  if (normalized.includes('u-turn')) {
+    return { symbol: '↺', label: 'U-turn' }
+  }
+
+  if (normalized.includes('roundabout')) {
+    return { symbol: '⟳', label: 'Roundabout' }
+  }
+
+  if (normalized.includes('arrive') || normalized.includes('destination')) {
+    return { symbol: '◎', label: 'Arrive' }
+  }
+
+  if (normalized.includes('slight right')) {
+    return { symbol: '↗', label: 'Slight right' }
+  }
+
+  if (normalized.includes('right')) {
+    return { symbol: '↱', label: 'Turn right' }
+  }
+
+  if (normalized.includes('slight left')) {
+    return { symbol: '↖', label: 'Slight left' }
+  }
+
+  if (normalized.includes('left')) {
+    return { symbol: '↰', label: 'Turn left' }
+  }
+
+  return {
+    symbol: '↑',
+    label: instruction,
+  }
 }
