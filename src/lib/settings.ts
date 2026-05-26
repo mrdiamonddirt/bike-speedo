@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 export type OdometerStyle = 'classic' | 'retro-roll' | 'eight-segment' | 'lcd' | 'mechanical'
 
 export type BikeSpeedoSettings = {
+  themeId: string
   units: 'mph' | 'kph'
   accent: string
   gaugeMax: number
@@ -12,6 +13,7 @@ export type BikeSpeedoSettings = {
 }
 
 export const DEFAULT_SETTINGS: BikeSpeedoSettings = {
+  themeId: 'neon-arc',
   units: 'mph',
   accent: '#20a4ff',
   gaugeMax: 40,

@@ -1,10 +1,27 @@
 .app-shell {
+  --accent: #20a4ff;
+  --app-bg: #050505;
+  --bg-glow-a: rgba(32, 164, 255, 0.2);
+  --bg-glow-b: rgba(52, 211, 153, 0.16);
+  --panel-bg: rgba(255, 255, 255, 0.05);
+  --panel-border: rgba(255, 255, 255, 0.1);
+  --gauge-shell-bg: linear-gradient(180deg, rgba(18, 18, 18, 0.98), rgba(10, 10, 10, 0.98));
+  --gauge-track: rgba(255, 255, 255, 0.14);
+  --gauge-glow: rgba(32, 164, 255, 0.44);
+  --speed-color: #ffffff;
+  --speed-unit-color: rgba(255, 255, 255, 0.72);
+  --font-display: 'Avenir Next Condensed', 'Arial Narrow', sans-serif;
+  --font-body: 'Segoe UI', 'Avenir Next', sans-serif;
+  --card-bg: rgba(255, 255, 255, 0.04);
+  --badge-bg: rgba(255, 255, 255, 0.04);
+  --odometer-accent: #d5efff;
   min-height: 100vh;
   padding: 20px;
+  font-family: var(--font-body);
   background:
-    radial-gradient(circle at top, rgba(32, 164, 255, 0.2), transparent 36%),
-    radial-gradient(circle at 80% 15%, rgba(52, 211, 153, 0.16), transparent 30%),
-    #050505;
+    radial-gradient(circle at top, var(--bg-glow-a), transparent 36%),
+    radial-gradient(circle at 80% 15%, var(--bg-glow-b), transparent 30%),
+    var(--app-bg);
   color: #f5f7fa;
 }
 
@@ -25,7 +42,7 @@
 .gps-pill {
   justify-self: center;
   padding: 12px 18px;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--badge-bg);
 }
 
 .pulse {
@@ -68,10 +85,29 @@
 .gauge-shell {
   position: relative;
   overflow: hidden;
-  background: linear-gradient(180deg, rgba(18, 18, 18, 0.98), rgba(10, 10, 10, 0.98));
-  border-color: rgba(255, 255, 255, 0.08);
+  background: var(--gauge-shell-bg);
+  border-color: var(--panel-border);
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
   padding: 20px 20px 18px;
+}
+
+.gauge-shell::before,
+.gauge-shell::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.gauge-shell::before {
+  background: radial-gradient(circle at 50% 45%, transparent 34%, rgba(255, 255, 255, 0.03) 35%, transparent 56%);
+  opacity: 0.7;
+}
+
+.gauge-shell::after {
+  inset: 18px;
+  border-radius: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
 }
 
 .gauge-center {
@@ -100,12 +136,35 @@
 }
 
 .gauge-track {
-  stroke: rgba(255, 255, 255, 0.14);
+  stroke: var(--gauge-track);
 }
 
 .gauge-progress {
   transition: stroke-dashoffset 240ms ease;
-  filter: drop-shadow(0 0 8px rgba(32, 164, 255, 0.44));
+  filter: drop-shadow(0 0 8px var(--gauge-glow));
+}
+
+.gauge-tick {
+  stroke: rgba(255, 255, 255, 0.28);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.gauge-tick-major {
+  stroke: rgba(255, 255, 255, 0.5);
+  stroke-width: 3;
+}
+
+.gauge-tick-label {
+  fill: rgba(255, 255, 255, 0.52);
+  font-size: 12px;
+  font-family: var(--font-body);
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+
+.gauge-tick-label-major {
+  fill: rgba(255, 255, 255, 0.74);
 }
 
 .speed-text-block {
@@ -114,10 +173,11 @@
 }
 
 .speed-text {
+  font-family: var(--font-display);
   font-size: clamp(4.2rem, 18vw, 9.5rem);
   line-height: 0.9;
   letter-spacing: -0.08em;
-  color: #ffffff;
+  color: var(--speed-color);
   text-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
 }
 
@@ -126,7 +186,7 @@
   font-size: 1rem;
   letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.72);
+  color: var(--speed-unit-color);
 }
 
 .gauge-limits {
@@ -208,9 +268,10 @@
 }
 
 .odometer-classic {
+  font-family: var(--font-display);
   font-size: 2rem;
   letter-spacing: 0.14em;
-  color: #d5efff;
+  color: var(--odometer-accent);
   text-shadow: 0 0 8px rgba(65, 186, 255, 0.55);
 }
 
@@ -295,7 +356,7 @@
 
 .gauge-card {
   min-height: 110px;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--card-bg);
 }
 
 .mini-metric-row {
@@ -308,8 +369,8 @@
 
 .stat-card,
 .panel {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.1);
+  background: var(--panel-bg);
+  border-color: var(--panel-border);
   box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
 }
 
@@ -323,6 +384,76 @@
   letter-spacing: 0.1em;
   font-size: 0.76rem;
   margin-bottom: 8px;
+}
+
+.theme-amber-touring .gauge-shell::before {
+  background: radial-gradient(circle at 50% 46%, transparent 32%, rgba(255, 209, 122, 0.05) 34%, transparent 60%);
+}
+
+.speedo-theme-amber-touring .gauge-progress,
+.speedo-theme-amber-touring .gauge-track {
+  stroke-linecap: butt;
+}
+
+.speedo-theme-amber-touring .speed-text {
+  letter-spacing: -0.04em;
+}
+
+.theme-mint-circuit .gauge-shell::after {
+  border-color: rgba(128, 255, 216, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(74, 222, 128, 0.08);
+}
+
+.speedo-theme-mint-circuit .gauge-tick,
+.speedo-theme-mint-circuit .gauge-tick-label {
+  opacity: 0.82;
+}
+
+.speedo-theme-mint-circuit .gauge-progress {
+  stroke-linecap: square;
+}
+
+.speedo-theme-rose-night .speed-text {
+  font-weight: 600;
+  letter-spacing: -0.05em;
+}
+
+.theme-rose-night .gauge-shell::before {
+  background: radial-gradient(circle at 50% 42%, transparent 31%, rgba(255, 199, 214, 0.04) 35%, transparent 58%);
+}
+
+.speedo-theme-graphite-rally .gauge-track,
+.speedo-theme-graphite-rally .gauge-progress {
+  stroke-width: 14;
+}
+
+.speedo-theme-graphite-rally .gauge-tick {
+  stroke-width: 2.5;
+}
+
+.speedo-theme-graphite-rally .speed-text {
+  text-transform: uppercase;
+}
+
+.theme-graphite-rally .gauge-shell::after {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.speedo-theme-ivory-luxe .speed-text {
+  font-weight: 500;
+  text-shadow: 0 0 12px rgba(32, 48, 64, 0.5);
+}
+
+.theme-ivory-luxe .gauge-shell::before {
+  background: radial-gradient(circle at 50% 44%, transparent 30%, rgba(255, 248, 224, 0.05) 35%, transparent 58%);
+}
+
+.speedo-theme-neon-arc .gauge-progress {
+  stroke-linecap: round;
+}
+
+.speedo-theme-neon-arc .speed-text {
+  letter-spacing: -0.08em;
 }
 
 .map-column.closed {

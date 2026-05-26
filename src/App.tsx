@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   Alert,
   Badge,
@@ -37,17 +37,16 @@ import {
   type BikeSpeedoSettings,
   usePersistentState,
 } from './lib/settings'
+import { DEFAULT_THEME_ID, getSpeedoTheme, SPEEDO_THEMES } from './lib/themes'
 import { useGeolocationTracker } from './lib/useGeolocationTracker'
 import { fetchRoutePlan, formatDistance, formatSpeed } from './lib/routing'
 import { clampTrips, formatTripDate, formatTripDuration, type TripSummary } from './lib/trips'
 import './App.css'
 
-const ACCENT_OPTIONS = [
-  { value: '#20a4ff', label: 'Sky' },
-  { value: '#34d399', label: 'Emerald' },
-  { value: '#f59e0b', label: 'Amber' },
-  { value: '#fb7185', label: 'Rose' },
-]
+const THEME_OPTIONS = SPEEDO_THEMES.map((theme) => ({
+  value: theme.id,
+  label: theme.label,
+}))
 
 const ODOMETER_STYLE_OPTIONS = [
   { value: 'classic', label: 'Classic Glow' },
@@ -80,11 +79,29 @@ function App() {
   const [routeStatus, setRouteStatus] = useState<RouteStatus>('idle')
   const [routeError, setRouteError] = useState<string | null>(null)
 
+  const activeTheme = getSpeedoTheme(settings.themeId || DEFAULT_THEME_ID)
+  const appThemeStyle = activeTheme.cssVariables as React.CSSProperties
+
   const tripStartRef = useRef<TripSessionStart | null>(null)
+  const didAutoRequestPermissionRef = useRef(false)
 
-  const { current, permissionState, error, isWatching, status, retry, requestPermission } = useGeolocationTracker(trackingEnabled)
+  const { current, permissionState, error, isWatching, status, retry, requestPermission, resetMetrics } = useGeolocationTracker(trackingEnabled)
 
-  const startTripSession = () => {
+  useEffect(() => {
+    if (didAutoRequestPermissionRef.current) {
+      return
+    }
+
+    if (permissionState === 'granted' || permissionState === 'denied') {
+      didAutoRequestPermissionRef.current = true
+      return
+    }
+
+    didAutoRequestPermissionRef.current = true
+    void requestPermission({ silent: true })
+  }, [permissionState, requestPermission])
+
+  const startTripSession = useCallback(() => {
     if (!current?.coords || tripStartRef.current) {
       return
     }
@@ -94,7 +111,7 @@ function App() {
       baseDistanceMeters: current.distanceMeters,
       startMaxSpeedKph: current.maxSpeedKph,
     }
-  }
+  }, [current])
 
   const finalizeTripSession = () => {
     const tripStart = tripStartRef.current
@@ -140,6 +157,7 @@ function App() {
       return
     }
 
+    resetMetrics()
     setTrackingEnabled(true)
     setTripMode('active')
     startTripSession()
@@ -192,13 +210,10 @@ function App() {
     }
 
     startTripSession()
-  }, [current, tripMode])
+  }, [current, startTripSession, tripMode])
 
   useEffect(() => {
     if (!current?.coords || !destination) {
-      setRoute(null)
-      setRouteStatus('idle')
-      setRouteError(null)
       return
     }
 
@@ -273,8 +288,18 @@ function App() {
     tripMode === 'active' ? <IconPlayerPause size={18} /> : <IconPlayerPlay size={18} />
   const topbarActionText = tripMode === 'active' ? 'PAUSE' : tripMode === 'paused' ? 'RESUME' : 'START'
 
+  const handleThemeChange = (value: string | null) => {
+    const nextTheme = getSpeedoTheme(value ?? DEFAULT_THEME_ID)
+    setSettings({
+      ...settings,
+      themeId: nextTheme.id,
+      accent: nextTheme.accent,
+      odometerStyle: nextTheme.odometerStyle,
+    })
+  }
+
   return (
-    <div className="app-shell" style={{ ['--accent' as string]: settings.accent }}>
+    <div className={`app-shell theme-${activeTheme.id}`} style={appThemeStyle}>
       <header className="topbar">
         <Group gap="xs" wrap="nowrap">
           <Button
@@ -347,12 +372,10 @@ function App() {
           />
 
           <Select
-            label="Accent color"
-            value={settings.accent}
-            onChange={(value) =>
-              setSettings({ ...settings, accent: value ?? DEFAULT_SETTINGS.accent })
-            }
-            data={ACCENT_OPTIONS}
+            label="Speedometer theme"
+            value={activeTheme.id}
+            onChange={handleThemeChange}
+            data={THEME_OPTIONS}
           />
 
           <Select
@@ -395,6 +418,7 @@ function App() {
       <main className="content-grid">
         <section className="speed-stage">
           <SpeedGauge
+            themeId={activeTheme.id}
             speedText={speedText}
             maxSpeed={settings.gaugeMax}
             unit={settings.units}
